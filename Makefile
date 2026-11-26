@@ -3,7 +3,7 @@ GO_MODULES := api flyke cli
 UI_DEPS    := ui/node_modules/.package-lock.json
 GOBIN      := $(shell go env GOPATH)/bin
 
-.PHONY: all build ui ui-dev gen fmt test test-go test-py test-ui lint dev demo clean bench bench-smoke bench-stress bench-images
+.PHONY: all build ui ui-dev gen fmt test test-go test-py test-ui lint dev demo clean
 
 all: build
 
@@ -54,29 +54,6 @@ lint:
 demo: build dev
 	./bin/flyke run examples/deploy.py:DeployService --service=api -f
 
-## bench: production-readiness gate (needs Docker). Every scenario must pass.
-##   make bench                       # profile "gate" (default)
-##   make bench RUN=TestLiveness      # only matching scenarios
-##   make bench FLYKE_BENCH_URL=http://staging:8742 FLYKE_BENCH_ADMIN_TOKEN=…   # external server
-BENCH_PROFILE ?= gate
-RUN ?= .
-bench:
-	@cd benchmark && FLYKE_BENCH_PROFILE=$(BENCH_PROFILE) go test ./scenarios -run '$(RUN)' -count=1 -timeout 90m $(BENCH_FLAGS); \
-	  status=$$?; sed -n '/^```/q;p' results/latest/summary.md 2>/dev/null; \
-	  echo "full report: benchmark/results/latest/summary.md"; exit $$status
-
-## bench-smoke: every scenario at small scale (~5 min), for iterating
-bench-smoke:
-	$(MAKE) bench BENCH_PROFILE=smoke
-
-## bench-stress: large scale (10k runs, 400k tasks), to find the limits
-bench-stress:
-	$(MAKE) bench BENCH_PROFILE=stress RUN='TestLoad_'
-
-## bench-images: (re)build the images the benchmarks run (done automatically by `make bench`)
-bench-images:
-	docker build -f benchmark/docker/server.Dockerfile -t flyke-bench/server:local .
-	docker build -f workers/python/Dockerfile -t flyke-bench/worker:local .
 
 clean:
 	rm -rf bin flyke-data ui/dist/app

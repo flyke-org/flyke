@@ -1,6 +1,6 @@
 # Licensing
 
-Copyright © 2026 Abdesslem Amri and the Flyke contributors.
+Copyright © 2026 Flyke.org and the Flyke contributors.
 
 Flyke uses two licenses. The **control plane, CLI and dashboard** are under the
 [Elastic License 2.0](LICENSE) (ELv2). The **pieces that end up inside your own code
@@ -12,7 +12,7 @@ definition) are under the [Apache License 2.0](sdk/LICENSE).
 | `sdk/` (Python package `flyke`) | Apache-2.0 | [`sdk/LICENSE`](sdk/LICENSE) |
 | `workers/python/` (Python package `flyke-worker`) | Apache-2.0 | [`workers/python/LICENSE`](workers/python/LICENSE) |
 | `api/` (worker protocol and REST types) | Apache-2.0 | [`api/LICENSE`](api/LICENSE) |
-| Everything else: `flyke/`, `cli/`, `ui/`, `benchmark/`, `docker/`, `docs/`, `examples/` | Elastic License 2.0 | [`LICENSE`](LICENSE) |
+| Everything else: `flyke/`, `cli/`, `ui/`, `docker/`, `docs/`, `examples/` | Elastic License 2.0 | [`LICENSE`](LICENSE) |
 
 A file in a directory that has its own `LICENSE` is under that license. Every other
 file is under the root `LICENSE`.

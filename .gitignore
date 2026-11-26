@@ -9,4 +9,3 @@ dist/
 .DS_Store
 ui/node_modules/
 ui/dist/app/
-/benchmark/results/

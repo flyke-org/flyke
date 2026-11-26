@@ -88,16 +88,12 @@ check that `make test-ui` (typecheck) passes.
 | `make test-go` | `go vet` and `go test -race` in `api`, `flyke` and `cli` |
 | `make test-py` | `pytest` for the SDK and the worker |
 | `make test-ui` | TypeScript typecheck of the dashboard |
-| `make bench-smoke` | the production gate at small scale (~5 min, needs Docker) |
-| `make bench` | the full production gate (needs Docker) |
 
 What we expect in a PR:
 
 - **A bug fix comes with a test that fails without the fix.**
 - Domain logic (`flyke/internal/domain`) and use cases (`flyke/internal/app`) have unit tests.
 - Replay behaviour has a test in `sdk/tests/test_replay.py`.
-- Changes to scheduling, leases, heartbeats or failure handling should pass
-  `make bench-smoke`. Say in the PR if you ran it.
 
 ## Code style
 
@@ -129,7 +125,6 @@ cli/            the `flyke` CLI and local mode
 sdk/            Python SDK: decorators, manifest, deterministic replayer
 workers/python/ Python worker agent
 ui/             React dashboard
-benchmark/      production gate scenarios
 docs/           user and design docs
 ```
 
