@@ -1,0 +1,21 @@
+# air config for the control plane (used by docker-compose.yml).
+root = "/src"
+tmp_dir = "/tmp/air"
+
+[build]
+  cmd = "cd /src/flyke && go build -o /tmp/air/flyke-server ./cmd/flyke-server"
+  entrypoint = ["/tmp/air/flyke-server"]
+  args_bin = ["-addr", ":8742", "-data-dir", "/data", "-dev"]
+  include_dir = ["flyke", "api"]
+  include_ext = ["go", "sql", "mod", "sum"]
+  exclude_regex = ["_test\\.go$"]
+  delay = 500
+  send_interrupt = true
+  kill_delay = "5s"
+  stop_on_error = false
+
+[log]
+  time = false
+
+[misc]
+  clean_on_exit = true

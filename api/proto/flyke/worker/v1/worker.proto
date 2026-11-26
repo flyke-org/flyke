@@ -1,0 +1,344 @@
+// Flyke worker protocol, v1.
+//
+// Every worker (Python today, Go/Rust later) that implements this service
+// contract can execute Flyke workloads. Design rules:
+//
+//   * Worker-initiated, outbound only. The control plane never dials a worker.
+//   * Unary RPCs only (long-poll for work). This keeps the protocol usable over
+//     plain HTTP/1.1 + JSON via the Connect protocol, so a worker needs no gRPC
+//     stack: POST /flyke.worker.v1.WorkerService/<Method> with a JSON body.
+//   * Leases, not trust. Every assignment carries a lease id that is renewed by
+//     heartbeats and acts as a fencing token for all reports.
+//   * The control plane decides retries/compensation; workers only report facts.
+syntax = "proto3";
+
+package flyke.worker.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/flyke-org/flyke/api/gen/flyke/worker/v1;workerv1";
+
+service WorkerService {
+  // Bootstrap: exchanges a join token for a worker credential.
+  // The only RPC that does not require a worker credential.
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+
+  // Liveness + lease renewal. Must be called every heartbeat_interval_seconds.
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+
+  // Long-poll for work. Returns at most max_items assignments.
+  rpc Poll(PollRequest) returns (PollResponse);
+
+  // Must be called (and must return proceed=true) before running a task's
+  // user code. Separates "assigned" from "started" so that a lost Poll
+  // response never counts as an unknown outcome.
+  rpc AckTask(AckTaskRequest) returns (AckTaskResponse);
+  rpc CompleteTask(CompleteTaskRequest) returns (CompleteTaskResponse);
+  rpc FailTask(FailTaskRequest) returns (FailTaskResponse);
+
+  // Workflow steps: replay the workflow body against history, return commands.
+  rpc CompleteStep(CompleteStepRequest) returns (CompleteStepResponse);
+  rpc FailStep(FailStepRequest) returns (FailStepResponse);
+
+  rpc PushLogs(PushLogsRequest) returns (PushLogsResponse);
+  rpc FetchBundle(FetchBundleRequest) returns (FetchBundleResponse);
+
+  // Reads a secret on behalf of a running task. The lease scopes the lookup
+  // to the run's namespace (Private secrets first, then Shared ones) and must
+  // be a task or compensation lease held by this worker. Returns NOT_FOUND
+  // when no secret with that key is visible.
+  rpc GetSecret(GetSecretRequest) returns (GetSecretResponse);
+
+  // Graceful exit: the worker leaves the cluster and its credential is revoked.
+  rpc Deregister(DeregisterRequest) returns (DeregisterResponse);
+}
+
+// ---------------------------------------------------------------- common ----
+
+// Opaque value. encoding "json/plain" is the only built-in codec today.
+message Payload {
+  string encoding = 1;
+  bytes data = 2;
+}
+
+message Failure {
+  // Fully qualified exception type, e.g. "builtins.ConnectionError".
+  string type = 1;
+  // Fully qualified type hierarchy, most specific first. Used for retry matching.
+  repeated string mro = 2;
+  string message = 3;
+  string stack = 4;
+  bool non_retryable = 5;
+}
+
+message Resources {
+  double cpu = 1;
+  int64 memory_bytes = 2;
+}
+
+message Capacity {
+  int32 slots = 1;
+  Resources resources = 2;
+}
+
+// ---------------------------------------------------------- registration ----
+
+message RegisterRequest {
+  string join_token = 1;
+  string hostname = 2;
+  // Optional desired name. Defaults to the hostname plus a random suffix.
+  string name = 3;
+  map<string, string> labels = 4;
+  Capacity capacity = 5;
+  // e.g. "python/3.12"
+  repeated string runtimes = 6;
+  string protocol_version = 7;
+  string agent_version = 8;
+}
+
+message RegisterResponse {
+  string worker_name = 1;
+  // Bearer credential for every subsequent call. Shown once; store it 0600.
+  string credential = 2;
+  // Effective labels (requested labels + labels enforced by the pool).
+  map<string, string> labels = 3;
+  int32 heartbeat_interval_seconds = 4;
+  int32 lease_ttl_seconds = 5;
+}
+
+message DeregisterRequest {}
+message DeregisterResponse {}
+
+// ------------------------------------------------------------- liveness ----
+
+message HeartbeatRequest {
+  int32 free_slots = 1;
+  repeated string active_leases = 2;
+}
+
+message HeartbeatResponse {
+  // Leases the worker must stop (cancelled, reassigned or unknown to the server).
+  repeated string cancel_leases = 1;
+  // Finish running work, accept nothing new, then exit.
+  bool drain = 2;
+}
+
+// ----------------------------------------------------------------- work ----
+
+message PollRequest {
+  int32 max_items = 1;
+  int32 wait_seconds = 2;
+}
+
+message PollResponse {
+  repeated Assignment assignments = 1;
+}
+
+// Where the workflow code lives.
+message Source {
+  // "<relative/path.py>:<ClassName>"
+  string entrypoint = 1;
+  // Local mode: an absolute directory on the worker's filesystem.
+  string local_root = 2;
+  // Remote mode: sha256 digest of a bundle fetched with FetchBundle.
+  string bundle_digest = 3;
+}
+
+message Assignment {
+  string lease_id = 1;
+  string run_id = 2;
+  string namespace = 3;
+  string workflow = 4;
+  Source source = 5;
+  // Workflow inputs (after defaulting), a JSON object.
+  Payload inputs = 6;
+  // Hard deadline for this attempt. Workers must cancel work past it.
+  google.protobuf.Timestamp deadline = 7;
+  // Id of the work item (task run or workflow step). Used to tag logs.
+  string work_id = 8;
+  oneof work {
+    TaskWork task = 10;
+    StepWork step = 11;
+  }
+}
+
+message TaskWork {
+  string task_id = 1;
+  int32 ref = 2;
+  string name = 3;
+  int32 attempt = 4;
+  // JSON array of positional arguments.
+  Payload args = 5;
+  string idempotency_key = 6;
+  // Compensation: `name` is the compensation function, called with the
+  // compensated task's args followed by its result.
+  bool compensation = 7;
+  Payload compensated_result = 8;
+  string compensated_task = 9;
+}
+
+message StepWork {
+  repeated HistoryEvent history = 1;
+}
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  EVENT_TYPE_RUN_STARTED = 1;
+  EVENT_TYPE_TASK_SCHEDULED = 2;
+  EVENT_TYPE_TASK_COMPLETED = 3;
+  EVENT_TYPE_TASK_FAILED = 4;
+  EVENT_TYPE_TIMER_STARTED = 5;
+  EVENT_TYPE_TIMER_FIRED = 6;
+  EVENT_TYPE_WAIT_STARTED = 7;
+  EVENT_TYPE_EVENT_RECEIVED = 8;
+  EVENT_TYPE_WAIT_TIMED_OUT = 9;
+  EVENT_TYPE_EVENT_EMITTED = 10;
+  EVENT_TYPE_RUN_COMPLETED = 11;
+  EVENT_TYPE_RUN_FAILED = 12;
+  EVENT_TYPE_CANCEL_REQUESTED = 13;
+}
+
+message HistoryEvent {
+  int32 id = 1;
+  EventType type = 2;
+  google.protobuf.Timestamp time = 3;
+  // The command sequence number this event relates to (0 for run-level events).
+  int32 ref = 4;
+  string name = 5;
+  Payload payload = 6;
+  Failure failure = 7;
+}
+
+message Command {
+  // Deterministic sequence number assigned by the SDK in call order.
+  int32 ref = 1;
+  oneof kind {
+    ScheduleTask schedule_task = 2;
+    StartTimer start_timer = 3;
+    WaitEvent wait_event = 4;
+    EmitEvent emit_event = 5;
+    CompleteRun complete_run = 6;
+    FailRun fail_run = 7;
+  }
+}
+
+message ScheduleTask {
+  string name = 1;
+  Payload args = 2;
+  string idempotency_key = 3;
+}
+
+message StartTimer {
+  int64 duration_ms = 1;
+}
+
+message WaitEvent {
+  string name = 1;
+  // JSON object of field -> expected value.
+  Payload where = 2;
+  // 0 = wait forever.
+  int64 timeout_ms = 3;
+}
+
+message EmitEvent {
+  string name = 1;
+  Payload payload = 2;
+}
+
+message CompleteRun {
+  Payload result = 1;
+}
+
+message FailRun {
+  Failure failure = 1;
+}
+
+message AckTaskRequest {
+  string lease_id = 1;
+}
+
+message AckTaskResponse {
+  bool proceed = 1;
+}
+
+message CompleteTaskRequest {
+  string lease_id = 1;
+  Payload result = 2;
+}
+
+message CompleteTaskResponse {}
+
+message FailTaskRequest {
+  string lease_id = 1;
+  Failure failure = 2;
+}
+
+message FailTaskResponse {}
+
+message CompleteStepRequest {
+  string lease_id = 1;
+  repeated Command commands = 2;
+}
+
+message CompleteStepResponse {}
+
+message FailStepRequest {
+  string lease_id = 1;
+  Failure failure = 2;
+}
+
+message FailStepResponse {}
+
+// ----------------------------------------------------------------- logs ----
+
+message LogRecord {
+  string run_id = 1;
+  // Assignment.work_id the record belongs to (task or workflow step).
+  string work_id = 2;
+  int32 attempt = 3;
+  // Per (task_id, attempt) monotonically increasing; used for dedup.
+  int64 seq = 4;
+  google.protobuf.Timestamp time = 5;
+  string level = 6;
+  string message = 7;
+  // JSON object of structured fields.
+  string fields_json = 8;
+  // "log" | "stdout" | "stderr"
+  string stream = 9;
+}
+
+message PushLogsRequest {
+  repeated LogRecord records = 1;
+}
+
+message PushLogsResponse {
+  int32 accepted = 1;
+}
+
+// --------------------------------------------------------------- bundles ----
+
+message FetchBundleRequest {
+  string digest = 1;
+}
+
+message FetchBundleResponse {
+  // tar.gz archive.
+  bytes data = 1;
+}
+
+// --------------------------------------------------------------- secrets ----
+
+message GetSecretRequest {
+  string lease_id = 1;
+  string key = 2;
+}
+
+message GetSecretResponse {
+  string key = 1;
+  // Plain (decrypted) value.
+  string value = 2;
+  // Sensitive values must not be logged; workers redact them from task logs.
+  bool sensitive = 3;
+  // "Private" or "Shared".
+  string type = 4;
+}

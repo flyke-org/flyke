@@ -1,0 +1,84 @@
+# Development stack: control plane + dashboard + Python worker, with live reload.
+#
+#   docker compose up --build
+#
+# With auth enabled (server and worker share the token):
+#   FLYKE_ADMIN_TOKEN=$(openssl rand -hex 32) docker compose up --build
+#
+#   dashboard (Vite, hot reload)  http://localhost:5173
+#   control plane API             http://localhost:8742
+#
+# The source tree is bind-mounted into every container:
+#   - flyke/, api/            -> server is rebuilt and restarted by air
+#   - ui/                     -> Vite hot module reload
+#   - sdk/, workers/python/   -> worker is restarted by watchfiles
+#
+# Run workflows from the host against this stack with:
+#   FLYKE_SERVER=http://127.0.0.1:8742 flyke run examples/hello.py:Hello -f
+
+name: flyke
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: docker/server.Dockerfile
+    working_dir: /src
+    command: ["air", "-c", "/src/docker/air.toml"]
+    environment:
+      # Enables auth when set: FLYKE_ADMIN_TOKEN=... docker compose up
+      FLYKE_ADMIN_TOKEN: ${FLYKE_ADMIN_TOKEN:-}
+    ports:
+      - "8742:8742"
+    volumes:
+      - .:/src
+      - server-data:/data
+      - go-mod:/go/pkg/mod
+      - go-build:/root/.cache/go-build
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8742/healthz"]
+      interval: 3s
+      timeout: 2s
+      retries: 100
+      start_period: 60s
+
+  ui:
+    image: node:22-alpine
+    working_dir: /app
+    command: ["sh", "/docker/ui-dev.sh"]
+    environment:
+      FLYKE_SERVER: http://server:8742
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./ui:/app
+      - ./docker:/docker:ro
+      # Keep the container's node_modules separate from the host's (native binaries differ).
+      - ui-node-modules:/app/node_modules
+    depends_on:
+      server:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/worker.Dockerfile
+    command: ["sh", "/src/docker/worker-dev.sh"]
+    environment:
+      FLYKE_URL: http://server:8742
+      FLYKE_POOL: local
+      FLYKE_WORKER_SLOTS: "4"
+      FLYKE_ADMIN_TOKEN: ${FLYKE_ADMIN_TOKEN:-}
+    volumes:
+      - ./sdk:/src/sdk
+      - ./workers/python:/src/workers/python
+      - ./docker:/src/docker:ro
+    depends_on:
+      server:
+        condition: service_healthy
+
+volumes:
+  server-data:
+  go-mod:
+  go-build:
+  ui-node-modules:

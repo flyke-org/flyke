@@ -1,0 +1,43 @@
+# uv workspace for the Python parts of the monorepo (SDK + Python worker).
+# `uv sync` creates ./.venv with both packages installed in editable mode.
+[project]
+name = "flyke-workspace"
+version = "0"
+requires-python = ">=3.11"
+dependencies = ["flyke", "flyke-worker"]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.7.0",
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.17.5",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["sdk", "workers/python"]
+
+[tool.uv.sources]
+flyke = { workspace = true }
+flyke-worker = { workspace = true }
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["sdk/tests", "workers/python/tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["sdk/src", "workers/python/src", "examples"]
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, import sorting, pyupgrade, bugbear
+select = ["E", "W", "F", "I", "UP", "B"]
+# Line length is the formatter's job; it leaves only unsplittable strings/comments long.
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["flyke", "flyke_worker"]

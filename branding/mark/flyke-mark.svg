@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 33 1016 764" role="img" aria-label="Flyke">
+<title>Flyke</title>
+<defs>
+  <linearGradient id="mbody" gradientUnits="userSpaceOnUse" x1="160" y1="795" x2="980" y2="240"><stop offset="0" stop-color="#3d35f2"/><stop offset=".5" stop-color="#4128ec"/><stop offset="1" stop-color="#5c3aff"/></linearGradient>
+  <radialGradient id="mshade" gradientUnits="userSpaceOnUse" cx="650" cy="600" r="260"><stop offset="0" stop-color="#3c08b8"/><stop offset=".45" stop-color="#3a10c0" stop-opacity=".75"/><stop offset="1" stop-color="#3a10c0" stop-opacity="0"/></radialGradient>
+  <linearGradient id="mupper" gradientUnits="userSpaceOnUse" x1="40" y1="60" x2="790" y2="430"><stop offset="0" stop-color="#108cff"/><stop offset=".45" stop-color="#4a3aff"/><stop offset=".75" stop-color="#5a2cf8"/><stop offset="1" stop-color="#1f15b4"/></linearGradient>
+  <radialGradient id="mtuck" gradientUnits="userSpaceOnUse" cx="800" cy="430" r="190"><stop offset="0" stop-color="#170c9c" stop-opacity=".9"/><stop offset="1" stop-color="#170c9c" stop-opacity="0"/></radialGradient>
+  <linearGradient id="mlower" gradientUnits="userSpaceOnUse" x1="180" y1="320" x2="780" y2="580"><stop offset="0" stop-color="#5596ff"/><stop offset=".4" stop-color="#4a40ff"/><stop offset=".78" stop-color="#7c2cff"/><stop offset="1" stop-color="#a020ff"/></linearGradient>
+  <clipPath id="mneck"><path d="M0 0 H1080 V380 L860 393 C820 442 735 550 676 622 L560 840 H0 Z"/></clipPath>
+</defs>
+<path fill="url(#mbody)" d="M160 795 L465 515 C600 505 700 490 765 480 L735 330 L748 292 C790 255 840 229 886 229 C930 229 966 250 990 285 C1012 295 1032 310 1042 323 C1045 330 1038 331 1030 330 L985 331 C935 333 893 355 860 393 C820 442 735 550 676 622 C640 660 580 688 508 692 C380 702 260 745 160 795 Z"/>
+<path fill="url(#mshade)" d="M160 795 L465 515 L780 470 L676 622 C640 660 580 688 508 692 C380 702 260 745 160 795 Z"/>
+<path fill="url(#mupper)" d="M32 38 C110 78 250 103 454 113 C560 122 660 180 728 270 C770 330 786 400 778 492 C766 432 724 378 650 344 C590 316 500 296 432 289 L265 274 C185 266 130 240 92 192 C62 150 42 98 32 38 Z"/>
+<path fill="url(#mtuck)" d="M32 38 C110 78 250 103 454 113 C560 122 660 180 728 270 C770 330 786 400 778 492 C766 432 724 378 650 344 C590 316 500 296 432 289 L265 274 C185 266 130 240 92 192 C62 150 42 98 32 38 Z"/>
+<path fill="url(#mlower)" clip-path="url(#mneck)" d="M173 308 C280 328 380 334 432 337 C520 343 570 350 605 360 C645 370 680 382 702 397 C725 412 745 428 756 441 C768 456 774 470 776 486 C800 500 820 520 810 545 L720 660 L676 624 C688 596 678 560 622 543 C570 527 520 520 464 518 C380 512 330 498 290 470 C248 440 200 382 173 308 Z"/>
+</svg>

@@ -1,0 +1,12 @@
+/bin/
+/flyke-data/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+dist/
+.DS_Store
+ui/node_modules/
+ui/dist/app/
+/benchmark/results/

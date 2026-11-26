@@ -1,0 +1,9 @@
+# Install once with `make dev` (or `uv run pre-commit install`).
+# Run on everything with `make fmt`.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.5
+    hooks:
+      - id: ruff-check
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format

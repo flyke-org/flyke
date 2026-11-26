@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Flyke">
+<title>Flyke</title>
+<defs><linearGradient id="tbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#108cff"/><stop offset=".55" stop-color="#4a2cf5"/><stop offset="1" stop-color="#8a24ff"/></linearGradient>
+<radialGradient id="thl" cx=".25" cy=".1" r=".9"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
+<rect width="1024" height="1024" rx="230" fill="url(#tbg)"/><rect width="1024" height="1024" rx="230" fill="url(#thl)"/>
+<g transform="translate(132.4 229.5) scale(0.70551)"><defs>
+  <clipPath id="tneck"><path d="M0 0 H1080 V380 L860 393 C820 442 735 550 676 622 L560 840 H0 Z"/></clipPath>
+  <mask id="tcut" maskUnits="userSpaceOnUse" x="0" y="0" width="1080" height="840">
+    <rect width="1080" height="840" fill="#fff"/>
+    <path d="M32 38 C110 78 250 103 454 113 C560 122 660 180 728 270 C770 330 786 400 778 492 C766 432 724 378 650 344 C590 316 500 296 432 289 L265 274 C185 266 130 240 92 192 C62 150 42 98 32 38 Z" fill="#000" stroke="#000" stroke-width="40" stroke-linejoin="round"/>
+    <path d="M173 308 C280 328 380 334 432 337 C520 343 570 350 605 360 C645 370 680 382 702 397 C725 412 745 428 756 441 C768 456 774 470 776 486 C800 500 820 520 810 545 L720 660 L676 624 C688 596 678 560 622 543 C570 527 520 520 464 518 C380 512 330 498 290 470 C248 440 200 382 173 308 Z" fill="#000" stroke="#000" stroke-width="40" stroke-linejoin="round" clip-path="url(#tneck)"/>
+  </mask>
+</defs>
+<g fill="#ffffff">
+<path mask="url(#tcut)" d="M160 795 L465 515 C600 505 700 490 765 480 L735 330 L748 292 C790 255 840 229 886 229 C930 229 966 250 990 285 C1012 295 1032 310 1042 323 C1045 330 1038 331 1030 330 L985 331 C935 333 893 355 860 393 C820 442 735 550 676 622 C640 660 580 688 508 692 C380 702 260 745 160 795 Z"/>
+<path d="M32 38 C110 78 250 103 454 113 C560 122 660 180 728 270 C770 330 786 400 778 492 C766 432 724 378 650 344 C590 316 500 296 432 289 L265 274 C185 266 130 240 92 192 C62 150 42 98 32 38 Z"/>
+<path clip-path="url(#tneck)" d="M173 308 C280 328 380 334 432 337 C520 343 570 350 605 360 C645 370 680 382 702 397 C725 412 745 428 756 441 C768 456 774 470 776 486 C800 500 820 520 810 545 L720 660 L676 624 C688 596 678 560 622 543 C570 527 520 520 464 518 C380 512 330 498 290 470 C248 440 200 382 173 308 Z"/>
+</g></g>
+</svg>
