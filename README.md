@@ -27,10 +27,10 @@ Retries, sagas, waits for humans and replay after crashes, without a DAG or YAML
 curl -fsSL https://raw.githubusercontent.com/flyke-org/flyke/main/install.sh | sh
 ```
 
-**Python SDK and worker** (`--pre` is needed while Flyke only has development releases):
+**Python SDK and worker**:
 
 ```sh
-pip install --pre flyke flyke-worker
+pip install flyke==0.1.0.dev0 flyke-worker==0.1.0.dev0
 ```
 
 **Docker images**: `ghcr.io/flyke-org/flyke-server` and `ghcr.io/flyke-org/flyke-worker`.

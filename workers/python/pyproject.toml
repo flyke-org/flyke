@@ -5,7 +5,7 @@ description = "Flyke data-plane worker for Python workflows"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
-dependencies = ["flyke", "httpx>=0.27"]
+dependencies = ["flyke", "httpx>=0.27,<1"]
 
 [project.scripts]
 flyke-worker = "flyke_worker.cli:main"
