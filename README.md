@@ -21,19 +21,16 @@ Retries, sagas, waits for humans and replay after crashes, without a DAG or YAML
 
 ## Install
 
-**CLI** (Linux / macOS), from the [latest release](https://github.com/flyke-org/flyke/releases/latest):
+**CLI** (Linux / macOS):
 
 ```sh
-curl -fsSL "https://github.com/flyke-org/flyke/releases/latest/download/flyke_$(curl -fsSL https://api.github.com/repos/flyke-org/flyke/releases/latest | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p')_$(uname -s | tr A-Z a-z)_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar -xz flyke
-sudo mv flyke /usr/local/bin/
+curl -fsSL https://raw.githubusercontent.com/flyke-org/flyke/main/install.sh | sh
 ```
 
-**Python SDK and worker**:
+**Python SDK and worker** (`--pre` is needed while Flyke only has development releases):
 
 ```sh
-pip install flyke flyke-worker
+pip install --pre flyke flyke-worker
 ```
 
 **Docker images**: `ghcr.io/flyke-org/flyke-server` and `ghcr.io/flyke-org/flyke-worker`.
-
-Releases are automated; see [release/README.md](release/README.md).
