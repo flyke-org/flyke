@@ -125,7 +125,7 @@ cli/            the `flyke` CLI and local mode
 sdk/            Python SDK: decorators, manifest, deterministic replayer
 workers/python/ Python worker agent
 ui/             React dashboard
-docs/           user and design docs
+docs/           user docs
 ```
 
 Topic guides:
