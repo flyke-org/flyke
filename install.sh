@@ -51,13 +51,25 @@ else
 fi
 [ -n "$expected" ] && [ "$expected" = "$actual" ] || fail "checksum mismatch for $file"
 
-tar -xzf "$tmp/$file" -C "$tmp" flyke
+# Archives built on macOS carry Apple xattr headers that GNU tar warns about.
+tar_opts=""
+tar --version 2>/dev/null | grep -q GNU && tar_opts="--warning=no-unknown-keyword"
+tar $tar_opts --no-same-owner -xzf "$tmp/$file" -C "$tmp" flyke
+chmod 755 "$tmp/flyke"
 
 if [ -w "$install_dir" ] || { [ ! -e "$install_dir" ] && mkdir -p "$install_dir" 2>/dev/null; }; then
-  mv "$tmp/flyke" "$install_dir/flyke"
+  sudo=""
 else
   echo "Installing to $install_dir (needs sudo)"
-  sudo mv "$tmp/flyke" "$install_dir/flyke"
+  sudo="sudo"
 fi
+$sudo mv "$tmp/flyke" "$install_dir/flyke"
+$sudo chmod 755 "$install_dir/flyke"
 
-echo "Installed $("$install_dir/flyke" --version) to $install_dir/flyke"
+if ! installed="$("$install_dir/flyke" --version 2>&1)"; then
+  ls -l "$install_dir/flyke" >&2
+  fail "$install_dir/flyke was installed but cannot run: $installed
+  If $install_dir is on a noexec file system, install elsewhere, e.g.:
+  curl -fsSL https://raw.githubusercontent.com/$repo/main/install.sh | FLYKE_INSTALL_DIR=\$HOME/.local/bin sh"
+fi
+echo "Installed $installed to $install_dir/flyke"
